@@ -1,9 +1,28 @@
-
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE agent SYSTEM 'xmlschemas/domino_11_0_1.dtd'>
+<agent name='saveFile' alias='saveFile' xmlns='http://www.lotus.com/dxl' version='11.0'
+ maintenanceversion='1.0' replicaid='C225854D00445075' hide='v3' publicaccess='false'
+ designerversion='8.5.3'>
+<noteinfo noteid='18a' unid='9AAE596ADCFBADC8C225854D004DC4BF' sequence='730'>
+<created><datetime dst='true'>20200417T170926,39+03</datetime></created>
+<modified><datetime dst='true'>20200422T134442,66+03</datetime></modified>
+<revised><datetime dst='true'>20200422T134442,65+03</datetime></revised>
+<lastaccessed><datetime dst='true'>20200422T134442,65+03</datetime></lastaccessed>
+<addedtofile><datetime dst='true'>20200417T170926,41+03</datetime></addedtofile></noteinfo>
+<updatedby><name>CN=Andriy Kosinskiy/O=CiNAU</name></updatedby>
+<wassignedby><name>CN=Andriy Kosinskiy/O=CiNAU</name></wassignedby>
+<designchange><datetime dst='true'>20200422T134442,63+03</datetime></designchange>
+<trigger type='actionsmenu'/>
+<documentset type='runonce'/><code event='options'><lotusscript>%REM
+	Agent saveFile
+	Created Apr 17, 2020 by Andriy Kosinskiy/CiNAU
+	Description: Comments for Agent
+%END REM
 Option Public
 Option Declare
 
 
-Sub Initialize
+</lotusscript></code><code event='initialize'><lotusscript>Sub Initialize
 	%REM
 		Input data format encoded in base64
 	%END REM
@@ -103,7 +122,7 @@ End Sub
 
 
 
-%REM
+</lotusscript></code><code event='hasDocId'><lotusscript>%REM
 	Function hasDocId
 	Description: Comments for Function
 %END REM
@@ -113,5 +132,12 @@ Function hasDocId(content As String, IdItemName As String) As Boolean
 	Else
 		hasDocId = False
 	End If
-End Function
+End Function</lotusscript></code>
+<rundata processeddocs='0' exitcode='0'>
+<agentmodified><datetime dst='true'>20200422T134442,66+03</datetime></agentmodified>
+<agentrun><datetime dst='true'>20200422T134454,37+03</datetime></agentrun>
+<runlog>Started running agent 'saveFile|saveFile' on 04/22/2020 01:44:54 PM
+Ran LotusScript code
+Done running agent 'saveFile|saveFile' on 04/22/2020 01:44:54 PM
+</runlog></rundata></agent>
 
