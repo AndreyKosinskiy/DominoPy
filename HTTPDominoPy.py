@@ -3,6 +3,7 @@ import re
 import requests
 import openpyxl
 import logging
+import json
 
  #init logging
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S',level=logging.INFO)
@@ -22,7 +23,7 @@ def action_with_data_in_file(filepath):
     logging.info(u"Genereted flat table.")
     return table
 
-def main():
+def main_old():
     #get entity from view
     entityes = requests.get("http://localhost/testAnon.nsf/testView?ReadViewEntries&ExpandView")
     logging.info(u"Get:: http://localhost/testAnon.nsf/testView?ReadViewEntries&ExpandView")
@@ -49,6 +50,53 @@ def main():
         }
         report = requests.post("http://localhost/testAnon.nsf/ProcessedTestForm?CreateDocument",data = new_data)
         logging.info(u"Post:: http://localhost/testAnon.nsf/ProcessedTestForm?CreateDocument, ouid source doc: "+doc_ouid)
+
+
+
+
+
+def is_downloadable(url):
+    """
+    Does the url contain a downloadable resource
+    """
+    h = requests.head(url, allow_redirects=True)
+    header = h.headers
+    content_type = header.get('content-type')
+    if 'text' in content_type.lower():
+        return False
+    if 'html' in content_type.lower():
+        return False
+    return True
+
+def main():
+    response = requests.get('http://localhost/testAnon.nsf/testView?ReadViewEntries&outputformat=JSON')
+    todos = json.loads(response.text)
+    print (todos)
+    for todo in todos['viewentry']:
+        entry1= todo['entrydata']
+        ouid_doc = todo['@unid']
+        filepath = entry1[0]['text']['0']
+        URL1='http://localhost'+filepath+'?OpenElement'
+        URL2=URL1.split("/$File")
+        print(URL2[0])
+        if is_downloadable(URL1):
+            r = requests.get(URL1, allow_redirects=True)
+            filename = ouid_doc+".xlsx"
+            with open(filename, 'wb') as file:
+                file.write(r.content)
+
+            new_data = {
+            'mark':'Downloaded',
+            'ouid':ouid_doc
+            }
+            report = requests.post("http://localhost/testAnon.nsf/ProcessedTestForm?CreateDocument",data = new_data)# Значение комплишина
+        else:
+            new_data = {
+            'mark':'Empty Document',
+            'ouid':ouid_doc
+            }
+            report = requests.post("http://localhost/testAnon.nsf/ProcessedTestForm?CreateDocument",data = new_data) # Значение error
+
 
 if __name__ == "__main__": 
     main()
