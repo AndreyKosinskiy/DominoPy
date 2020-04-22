@@ -1,0 +1,143 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE agent SYSTEM 'xmlschemas/domino_11_0_1.dtd'>
+<agent name='saveFile' alias='saveFile' xmlns='http://www.lotus.com/dxl' version='11.0'
+ maintenanceversion='1.0' replicaid='C225854D00445075' hide='v3' publicaccess='false'
+ designerversion='8.5.3'>
+<noteinfo noteid='18a' unid='9AAE596ADCFBADC8C225854D004DC4BF' sequence='730'>
+<created><datetime dst='true'>20200417T170926,39+03</datetime></created>
+<modified><datetime dst='true'>20200422T134442,66+03</datetime></modified>
+<revised><datetime dst='true'>20200422T134442,65+03</datetime></revised>
+<lastaccessed><datetime dst='true'>20200422T134442,65+03</datetime></lastaccessed>
+<addedtofile><datetime dst='true'>20200417T170926,41+03</datetime></addedtofile></noteinfo>
+<updatedby><name>CN=Andriy Kosinskiy/O=CiNAU</name></updatedby>
+<wassignedby><name>CN=Andriy Kosinskiy/O=CiNAU</name></wassignedby>
+<designchange><datetime dst='true'>20200422T134442,63+03</datetime></designchange>
+<trigger type='actionsmenu'/>
+<documentset type='runonce'/><code event='options'><lotusscript>%REM
+	Agent saveFile
+	Created Apr 17, 2020 by Andriy Kosinskiy/CiNAU
+	Description: Comments for Agent
+%END REM
+Option Public
+Option Declare
+
+
+</lotusscript></code><code event='initialize'><lotusscript>Sub Initialize
+	%REM
+		Input data format encoded in base64
+	%END REM
+	Dim session As New NotesSession
+	Dim db As NotesDatabase
+	Dim tempdoc As NotesDocument
+	Dim doc As NotesDocument
+	Dim stream As NotesStream
+	Dim body As NotesMIMEEntity
+	Dim header As NotesMIMEHeader
+	
+	Dim StringInBase64 As String
+	Dim doc_identifier As String
+	Dim delim As String
+	Dim FileName As String
+	Dim ArrayStringInBase64 As Variant
+	Dim ArrayQueryes As Variant
+	Dim ContentInBase64 As Variant
+
+
+	
+	Print "&lt;h2&gt;Start uploading!&lt;/h2&gt;"	
+	Set db=session.Currentdatabase	
+	Set tempdoc=db.Createdocument()
+	session.ConvertMIME = False ' Do not convert MIME to rich text
+	
+	' get document with CGI variable, REQUEST_CONTENT ect..
+	Set doc = session.DocumentContext
+	
+	' get all CGI variable put in file
+	'Call doc.Copyallitems(tempdoc, False)
+
+	
+	
+	StringInBase64 = doc.REQUEST_CONTENT(0)
+	
+	If  Not hasDocId(StringInBase64,"doc_identifier") Then
+		
+		doc_identifier = ""
+		
+		' get file content with header
+		tempdoc.DirtyFile = StringInBase64
+		
+		' get file content
+		ArrayStringInBase64 = Split(StringInBase64,Chr(13)&amp;Chr(10))
+		ContentInBase64 = ArrayStringInBase64(3)
+		
+		' get file name
+		ArrayStringInBase64 =  Split(ArrayStringInBase64(1),{"})
+		FileName = ArrayStringInBase64(3)
+
+		
+	Else
+		Dim tempArray As Variant
+		delim = Mid(StringInBase64,1,36)
+		ArrayStringInBase64 = Split(StringInBase64,delim)
+		' 0 element in  array is blank.
+		' 1 element in  array is header+content id.
+		tempArray = Split(ArrayStringInBase64(1),Chr(13)&amp;Chr(10))
+		doc_identifier = tempArray(2)
+		' 2 element in  array is header+content file.
+		tempArray = Split(ArrayStringInBase64(2),Chr(13)&amp;Chr(10))
+		ContentInBase64 = tempArray(2)
+		' get file name
+		ArrayStringInBase64 =  Split(tempArray(0),{"})
+		FileName = ArrayStringInBase64(3)
+	End If
+
+
+	Set stream = session.CreateStream
+	Call stream.WriteText(ContentInBase64)
+	
+	Set body = tempdoc.CreateMIMEEntity()
+	
+	Set header = body.createHeader("Content-Type")
+	Call header.setHeaderVal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	
+	Set header = body.createHeader("Content-Disposition")
+	Call header.setHeaderVal("attachment; filename=" &amp; FileName)
+	
+	Set header = body.createHeader("Content-ID")
+	Call header.setHeaderVal("testforUpload.xlsx") 
+	
+	Call body.Setcontentfrombytes(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ENC_BASE64  )		
+	'Call body.DecodeContent
+	Call stream.Close
+	 
+	tempdoc.doc_identifier = doc_identifier
+	tempdoc.ContentInBase64 = ContentInBase64
+	tempdoc.FileName = FileName
+	tempdoc.form="TestForm"
+	Call tempdoc.save(True,False)
+	session.ConvertMIME = True ' Restore conversion
+	Print "&lt;h2&gt;File uploaded successfully!&lt;/h2&gt;"
+End Sub
+
+
+
+
+</lotusscript></code><code event='hasDocId'><lotusscript>%REM
+	Function hasDocId
+	Description: Comments for Function
+%END REM
+Function hasDocId(content As String, IdItemName As String) As Boolean
+	If InStr(content, IdItemName) &gt; 0 Then
+		hasDocId = True
+	Else
+		hasDocId = False
+	End If
+End Function</lotusscript></code>
+<rundata processeddocs='0' exitcode='0'>
+<agentmodified><datetime dst='true'>20200422T134442,66+03</datetime></agentmodified>
+<agentrun><datetime dst='true'>20200422T134454,37+03</datetime></agentrun>
+<runlog>Started running agent 'saveFile|saveFile' on 04/22/2020 01:44:54 PM
+Ran LotusScript code
+Done running agent 'saveFile|saveFile' on 04/22/2020 01:44:54 PM
+</runlog></rundata></agent>
+
