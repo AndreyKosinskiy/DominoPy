@@ -5,6 +5,12 @@ import openpyxl
 import logging
 import json
 
+import base64
+
+GLOBAL_URL = "http://localhost/testAnon.nsf/"
+VIEW_NAME = "testView"
+SITE_AGENT = GLOBAL_URL+"saveFile?OpenAgent"
+
  #init logging
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S',level=logging.INFO)
 def action_with_data_in_file(filepath):
@@ -25,7 +31,7 @@ def action_with_data_in_file(filepath):
 
 def main_old():
     #get entity from view
-    entityes = requests.get("http://localhost/testAnon.nsf/testView?ReadViewEntries&ExpandView")
+    entityes = requests.get(GLOBAL_URL+VIEW_NAME+"?ReadViewEntries&ExpandView")
     logging.info(u"Get:: http://localhost/testAnon.nsf/testView?ReadViewEntries&ExpandView")
     # get urls, using rexexp
     urls = re.findall('<text>(.*)<\/text>', entityes.text)
@@ -69,33 +75,57 @@ def is_downloadable(url):
     return True
 
 def main():
-    response = requests.get('http://localhost/testAnon.nsf/testView?ReadViewEntries&outputformat=JSON')
+    response = requests.get(GLOBAL_URL+VIEW_NAME+'?ReadViewEntries&outputformat=JSON')
     todos = json.loads(response.text)
-    print (todos)
+    #print (todos)
     for todo in todos['viewentry']:
         entry1= todo['entrydata']
         ouid_doc = todo['@unid']
         filepath = entry1[0]['text']['0']
         URL1='http://localhost'+filepath+'?OpenElement'
         URL2=URL1.split("/$File")
-        print(URL2[0])
+        #print(URL2[0])
         if is_downloadable(URL1):
             r = requests.get(URL1, allow_redirects=True)
             filename = ouid_doc+".xlsx"
             with open(filename, 'wb') as file:
                 file.write(r.content)
 
-            new_data = {
-            'mark':'Downloaded',
-            'ouid':ouid_doc
-            }
-            report = requests.post("http://localhost/testAnon.nsf/ProcessedTestForm?CreateDocument",data = new_data)# Значение комплишина
+            # new_data = {
+            # 'mark':'Downloaded',
+            # 'ouid':ouid_doc
+            # }
+            upload_file_to_document(ouid_doc,filename)
+            #report = requests.post("http://localhost/testAnon.nsf/ProcessedTestForm?CreateDocument",data = new_data)# Значение комплишина
         else:
             new_data = {
             'mark':'Empty Document',
             'ouid':ouid_doc
             }
-            report = requests.post("http://localhost/testAnon.nsf/ProcessedTestForm?CreateDocument",data = new_data) # Значение error
+            report = requests.post(GLOBAL_URL+"ProcessedTestForm?CreateDocument",data = new_data) # Значение error
+
+
+def upload_file_to_document(doc_identifier,upload_file_path):
+    """
+    Paraments:
+        doc_identifier - doc id, doc ouid, doc_uid
+        upload_file_path - path to file what you wont to upload
+    """
+    data = None
+    files= dict()
+    file_name = upload_file_path.split("\\")[-1]
+    headers ={
+        "Content-Type":"application/octet-stream",
+    }
+    if len(doc_identifier) == 32:
+        data = {
+            "doc_identifier":doc_identifier,
+        }
+    with open(upload_file_path, 'rb') as file:
+       files[file_name] = file.read()
+       files[file_name] = base64.b64encode(files[file_name])
+    upload_file = requests.post(SITE_AGENT,files=files,headers=headers,data=data)
+    print(upload_file.text)
 
 
 if __name__ == "__main__": 
